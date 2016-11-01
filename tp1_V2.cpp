@@ -28,7 +28,7 @@ int main (int argc, char **argv) {
 	int estado = 0;												//controla o que o lexico deve fazer
 	char atual;													//armazena o caractere que esta sendo lido atualmente
 	bool permiteEstado = false;									//controla o funcionamento dos estados (so funciona apos ler '{')
-	string token = "";											//string que armazena as varaiveis encontradas
+	string token = "";											//string que armazena as variaveis encontradas
 	string nova_regra;											//string que armazena uma regra no estado 3
 	Transicao nova_transicao;									//estrutura mapeada por uma regra
 
@@ -83,15 +83,15 @@ int main (int argc, char **argv) {
 							nova_transicao.destino = token[1];	//pra onde vai apos o consumo
 							if (token[1]) 						//caso exista destino
 								nova_transicao.final = false;	//nao e estado final
-							else {
-								nova_transicao.destino += 'Z';	//caso nao exista destino vai para Z
-								nova_transicao.final = true;	//essa transicao vai para estado final
-							}
-							if(atual == '}') {					//termina de ler as regras
-								/** esta sendo considerado que lambda sera sempre o ultimo (pode??) **/
+							else if(token[0] == '#'){			//caso o destino seja lambda insere uma transição vazia
 								nova_transicao.destino = '#';	//lambda
 								nova_transicao.consome = '#';	//lambda
 								nova_transicao.final = true;	//e estado final
+							}else{
+								nova_transicao.destino = 'Z';	//caso nao exista destino vai para Z
+								nova_transicao.final = true;	//essa transicao vai para estado final
+							}
+							if(atual == '}') {					//termina de ler as regras
 								estado = 4;						//vai direto para o ultimo estado
 							}
 							regras.insert(make_pair(nova_regra, nova_transicao));
@@ -148,7 +148,7 @@ int main (int argc, char **argv) {
 	queue<vector<string> > q;									//fila onde sao colocados os conjuntos
 	vector<string> inicio;										
 	inicio.push_back(afn.inicio);								
-	q.push(inicio);												//itera o vetor de variaveis que foram lidas
+	q.push(inicio);													//itera o vetor de variaveis que foram lidas
 
 	map<string, int> alfabetoInt;								//mapeamento de alfabeto para um inteiro
 	for (int i = 0; i < alfabeto.size(); i++) 
@@ -166,7 +166,7 @@ int main (int argc, char **argv) {
 			for (int j = 0; j < afn.S.size(); j++) {			//itera os estados do afn
 				if (afn.S[j].nome == atual) {					//se o estado for igual a variavel atual
 					for (int k = 0; k < afn.S[j].transicoes.size(); k++) { 	//varre as transicoes desse estado
-						if (afn.S[j].transicoes[k].destino != "#")		   	//se for para lambida nao considera
+						if (afn.S[j].transicoes[k].destino != "#")		   	//se for para lambda nao considera
 							aux[alfabetoInt[afn.S[j].transicoes[k].consome]] += afn.S[j].transicoes[k].destino;	
 					}
 				}
@@ -189,14 +189,14 @@ int main (int argc, char **argv) {
 			}
 
 			if (!existe) {										//se o estado nao existe, ele deve ser colocado na fila
-				vector<string> novoElemento;					//como cada variavel e considerada separadamente, cria um vetor com a variaveis desse estado
+				vector<string> novoElemento;					//como cada variavel e considerada separadamente, cria um vetor com as variaveis desse estado
 				for (int j = 0; j < aux[i].size(); j++) {
 					string inc = "";
 					inc += aux[i][j];							
 					novoElemento.push_back(inc);
 				}
 				if (novoElemento.size() > 0)					//se o novo estado nao for vazio coloca na pilha
-					q.push(novoElemento);						//para nao entrar em loop
+					q.push(novoElemento);							//para nao entrar em loop
 			}
 		}
 
