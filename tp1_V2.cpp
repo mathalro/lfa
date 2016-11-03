@@ -231,15 +231,6 @@ int main (int argc, char **argv) {
 				break;
 			}
 		}
-		/*for(int i = 0;i < afd.S.size();i++){
-			if(afd.S[i].final){
-				cout << "estado final" << endl;
-			}
-		}
-		if(estadoAtual.final){
-			cout << estadoAtual.nome << endl;
-			cout << "estado final" << endl;
-		}*/
 		while(!entradaUsuario.empty()){
 			for(int i = 0;i < estadoAtual.transicoes.size();i++){	//olhando as transições do estado atual
 				if(estadoAtual.transicoes[i].consome[0] == entradaUsuario[0]){ //se há transição para o primeiro símbolo da palavra
