@@ -1,0 +1,1 @@
+	g++ tp1_V2.cpp Estruturas.h -std=c++11 
