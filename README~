@@ -1,0 +1,6 @@
+*********************** README INTERPERTADOR GRAMÁTICA ***********************
+****************** Alunos : Higor Coimbra e Matheus Almeida ******************
+
+1 - Para compilar use o comando 'make' dentro do diretório do trabalho.
+
+2 - Para executar use o comando './Leitor [nome da entrada]'

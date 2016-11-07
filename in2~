@@ -1,0 +1,1 @@
+G= ({A,B,C,D,E}, {a,b}, {A-> aB,A-> #,B-> bC,B-> bD,C-> bD, D-> bE, D-> bA, E-> aA},A)
