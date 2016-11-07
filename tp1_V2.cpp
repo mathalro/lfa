@@ -28,7 +28,7 @@ int main (int argc, char **argv) {
 	int estado = 0;												//controla o que o lexico deve fazer
 	char atual;													//armazena o caractere que esta sendo lido atualmente
 	bool permiteEstado = false;									//controla o funcionamento dos estados (so funciona apos ler '{')
-	string token = "";											//string que armazena as varaiveis encontradas
+	string token = "";											//string que armazena as variaveis encontradas
 	string nova_regra;											//string que armazena uma regra no estado 3
 	Transicao nova_transicao;									//estrutura mapeada por uma regra
 
@@ -81,19 +81,20 @@ int main (int argc, char **argv) {
 						case ',': case '}': {
 							nova_transicao.consome = token[0];	//o que e consumido
 							nova_transicao.destino = token[1];	//pra onde vai apos o consumo
-							if (token[1]) 						//caso exista destino
+							if (token[1]){						//caso exista destino
 								nova_transicao.final = false;	//nao e estado final
-							else {
-								nova_transicao.destino += 'Z';	//caso nao exista destino vai para Z
-								nova_transicao.final = true;	//essa transicao vai para estado final
-							}
-							if(atual == '}') {					//termina de ler as regras
-								/** esta sendo considerado que lambda sera sempre o ultimo (pode??) **/
+							}else if(token[0] == '#'){			//caso o destino seja lambda insere uma transição vazia								
 								nova_transicao.destino = '#';	//lambda
 								nova_transicao.consome = '#';	//lambda
-								nova_transicao.final = true;	//e estado final
+								nova_transicao.final = true;	//e estado final 
+							}else{
+								nova_transicao.destino = 'Z';	//caso nao exista destino vai para Z
+								nova_transicao.final = false;	//essa transicao vai para estado final
+							}
+							if(atual == '}') {					//termina de ler as regras
 								estado = 4;						//vai direto para o ultimo estado
 							}
+							cout << nova_regra << " " << nova_transicao.consome << " " << nova_transicao.destino << endl;
 							regras.insert(make_pair(nova_regra, nova_transicao));
 							token = "";
 							break;
@@ -129,12 +130,11 @@ int main (int argc, char **argv) {
 		Estado novo;
 		novo.nome = variavel[i];								//para cadas variavel lida cria-se um novo estado
 		for (auto it : regras) {								//itera o mapeameto de regras, salvando as transicoes desse estado
-			if (it.first == novo.nome) {						
+			if (it.first == novo.nome) {		
 				novo.transicoes.push_back(it.second);
 				novo.final = it.second.final;
 			}
 		}
-
 		afn.S.push_back(novo);									//coloca a nova regra no afn
 	}
 	
@@ -148,7 +148,8 @@ int main (int argc, char **argv) {
 	queue<vector<string> > q;									//fila onde sao colocados os conjuntos
 	vector<string> inicio;										
 	inicio.push_back(afn.inicio);								
-	q.push(inicio);												//itera o vetor de variaveis que foram lidas
+	q.push(inicio);													//itera o vetor de variaveis que foram lidas
+	afd.inicio = afn.inicio;
 
 	map<string, int> alfabetoInt;								//mapeamento de alfabeto para um inteiro
 	for (int i = 0; i < alfabeto.size(); i++) 
@@ -166,8 +167,8 @@ int main (int argc, char **argv) {
 			for (int j = 0; j < afn.S.size(); j++) {			//itera os estados do afn
 				if (afn.S[j].nome == atual) {					//se o estado for igual a variavel atual
 					for (int k = 0; k < afn.S[j].transicoes.size(); k++) { 	//varre as transicoes desse estado
-						if (afn.S[j].transicoes[k].destino != "#")		   	//se for para lambida nao considera
-							aux[alfabetoInt[afn.S[j].transicoes[k].consome]] += afn.S[j].transicoes[k].destino;	
+						if (afn.S[j].transicoes[k].destino != "#")		   	//se for para lambda nao considera
+							aux[alfabetoInt[afn.S[j].transicoes[k].consome]] += afn.S[j].transicoes[k].destino;
 					}
 				}
 			}
@@ -180,7 +181,7 @@ int main (int argc, char **argv) {
 			Transicao t;
 			t.consome = alfabeto[i];							//a transicao consome essa "letra" do alfabeto
 			t.destino = aux[i];									//define o destino
-			novo.transicoes.push_back(t);						//coloca essa nova transicao na lista de estados
+			novo.transicoes.push_back(t);						//coloca essa nova transicao na lista de estados			
 
 			for (int j = 0; j < afd.S.size(); j++) {			//itera nos estados ja exitentes do afd
 				if (afd.S[j].nome == aux[i]) { 					
@@ -189,25 +190,81 @@ int main (int argc, char **argv) {
 			}
 
 			if (!existe) {										//se o estado nao existe, ele deve ser colocado na fila
-				vector<string> novoElemento;					//como cada variavel e considerada separadamente, cria um vetor com a variaveis desse estado
+				vector<string> novoElemento;					//como cada variavel e considerada separadamente, cria um vetor com as variaveis desse estado
 				for (int j = 0; j < aux[i].size(); j++) {
 					string inc = "";
 					inc += aux[i][j];							
 					novoElemento.push_back(inc);
 				}
 				if (novoElemento.size() > 0)					//se o novo estado nao for vazio coloca na pilha
-					q.push(novoElemento);						//para nao entrar em loop
+					q.push(novoElemento);							//para nao entrar em loop
 			}
 		}
 
-		if (!existe)
+		if (!existe){
+			for(int i = 0;i < afn.S.size();i++){
+				if(novo.nome.find(afn.S[i].nome) != -1 && afn.S[i].final){ //caso o novo estado contenha um estado final do afn					
+					novo.final = true;
+				}else if(novo.nome.find(afn.S[i].nome) != -1 && !afn.S[i].final){ //do contrário o estado não é final
+					novo.final = false;
+				}else if(novo.nome.find("Z") != -1){ //se o estado tiver Z no nome ele é final
+					novo.final = true;
+				}
+			}
 			afd.S.push_back(novo);								//coloca o estado no afd
+		}
 	}
 
 	imprimeAutomato(afd, "Automato finito deterministico");
 
+	//teste de palavras
+	string entradaUsuario;										//string para teste da gramatica
+	Estado estadoAtual;											//estado usado para caminhar no afd
+	bool achouDestino;
+	bool paradaEstadoNaoFinal;
+	while(cin >> entradaUsuario){
+		achouDestino = false;
+		paradaEstadoNaoFinal = false;
+		for(int i = 0;i < afd.S.size();i++){
+			if(afd.S[i].nome == afd.inicio){
+				estadoAtual = afd.S[i];							//grava o estado inicial para começar a varredura
+				break;
+			}
+		}
+		while(!entradaUsuario.empty()){
+			for(int i = 0;i < estadoAtual.transicoes.size();i++){	//olhando as transições do estado atual
+				if(estadoAtual.transicoes[i].consome[0] == entradaUsuario[0]){ //se há transição para o primeiro símbolo da palavra
+					//procurar no automato o destino da transicao de estadoAtual lendo entradaUsuario[0]
+					for(int j = 0;j < afd.S.size();j++){ 
+						if(afd.S[j].nome == estadoAtual.transicoes[i].destino){
+							estadoAtual = afd.S[j];
+							//cout << estadoAtual.nome << endl;
+							achouDestino = true;
+							entradaUsuario.erase(entradaUsuario.begin());//consome efetivamente o começo da palavra
+							break;
+						}
+					}
+				}else if(i == estadoAtual.transicoes.size()-1){
+					paradaEstadoNaoFinal = true;
+					break;
+				}
+				if(achouDestino)
+					break;
+			}
+			if(paradaEstadoNaoFinal)
+				break;
+			achouDestino = false;
+		}
+		if(paradaEstadoNaoFinal)
+			cout << "Não" << endl;
+		else if(estadoAtual.final)
+			cout << "Sim" << endl;
+	}
+	
+
 	return 0;
 }
+
 
 void imprimeAutomato(Automato aut, string tipo) {
 	cout << endl << tipo << endl;
